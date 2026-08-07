@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20"></text></svg>'), auto !important;margin: 0; overflow: hidden; background: #000; }
+        #ui { position: absolute; top: 10px; width: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="ui"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const texLoader = new THREE.TextureLoader();
+        scene.background = texLoader.load('https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRPLfH-t2Xb2KdNdaeZuLsb2a520Q5ma49Oz7Ek2SleE3e_4k4l');
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+        scene.add(hemiLight);
+
+        const player = new THREE.Group();
+        player.position.set(0, 5, 0);
+        scene.add(player);
+
+        let lastCheckpoint = new THREE.Vector3(0, 5, 0);
+        let mixer, idleAction, walkAction, jumpAction, fallAction, currentAction;
+        const clock = new THREE.Clock();
+
+        let targetRotationX = 0, currentRotationX = 0;
+        let targetRotationY = 0.3, currentRotationY = 0.3;
+        let isRightMouseDown = false;
+
+        window.addEventListener('contextmenu', (e) => e.preventDefault());
+        window.addEventListener('mousedown', (e) => { if (e.button === 2) isRightMouseDown = true; });
+        window.addEventListener('mouseup', (e) => { if (e.button === 2) isRightMouseDown = false; });
+        window.addEventListener('mousemove', (e) => {
+            if (isRightMouseDown) {
+                targetRotationX -= e.movementX * 0.005;
+                targetRotationY -= e.movementY * 0.005; 
+                targetRotationY = Math.max(-0.8, Math.min(1.2, targetRotationY));
+            }
+        });
+
+// You Can Add Objects Here! Tut: You Copy The "function createBlock" Chunk, Rename The "createBlock" On Your Function, Copy The "const platforms = [];" And Rename "platforms", On Your Function Chunk, You Rename "platforms" In "platforms.push" To Your "const"! Thats How To ADD Objects Not Change The Object's Functions.
+
+        const platforms = [];
+        const staticLava = [];
+
+        function createBlock(x, y, z, w, d, h=1, color=0xffffff) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshPhongMaterial({ color: color }));
+            mesh.position.set(x, y, z);
+            scene.add(mesh);
+            platforms.push({ xMin: x-w/2, xMax: x+w/2, zMin: z-d/2, zMax: z+d/2, yTop: y+h/2 });
+        }
+
+        function createStaticLava(x, y, z, w, d, h=0.8) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
+            mesh.position.set(x, y, z);
+            scene.add(mesh);
+            staticLava.push({ xMin: x-w/2, xMax: x+w/2, zMin: z-d/2, zMax: z+d/2, yMin: y-h/2, yMax: y+h/2 + 1 });
+        }
+
+        createBlock(0, -2, 0, 10, 10, 1, 0x444444); 
+        for(let i=1; i<=3; i++) createBlock(0, -2 + (i*1.5), -i*10, 6, 6, 0.5, 0xffffff);
+        
+        createBlock(0, 4, -45, 12, 12, 0.5, 0x55FF55);
+        createStaticLava(0, 4.4, -45, 12, 1.5); 
+        
+        createBlock(0, 4, -65, 12, 12, 0.5, 0x55FF55);
+        createStaticLava(0, 4.4, -65, 12, 1.5); 
+
+        createBlock(0, 8, -85, 15, 15, 1, 0xFFD700);
+
+        const gltfLoader = new THREE.GLTFLoader();
+        gltfLoader.load('https://raw.githubusercontent.com/beesw134-gif/noob2/main/r6_roblox_noob_animated%20(1).glb', (gltf) => {
+            player.add(gltf.scene);
+            mixer = new THREE.AnimationMixer(gltf.scene);
+            gltf.animations.forEach((clip) => {
+                const n = clip.name;
+                if (n === 'R6Armature|Idle') idleAction = mixer.clipAction(clip);
+                else if (n.includes('Run') || n.includes('Walk')) { 
+                    walkAction = mixer.clipAction(clip); 
+                    walkAction.timeScale = 2.2; 
+                }
+                else if (n.includes('Jump')) jumpAction = mixer.clipAction(clip);
+                else if (n.includes('Fall')) fallAction = mixer.clipAction(clip);
+            });
+            currentAction = idleAction;
+            if (currentAction) currentAction.play();
+        });
+
+        function transitionTo(nextAction) {
+            if (nextAction && nextAction !== currentAction) {
+                if (currentAction) currentAction.fadeOut(0.1);
+                currentAction = nextAction;
+                currentAction.reset().fadeIn(0.1).play();
+            }
+        }
+
+        let vy = 0, isGrounded = false;
+        const keys = {};
+        
+        const turnStep = Math.PI / 8; 
+
+        window.onkeydown = (e) => {
+            keys[e.code] = true;
+            if (e.code === 'Period') {
+                targetRotationX += turnStep;
+                currentRotationX = targetRotationX; // Make it immediate/not smooth
+            }
+            if (e.code === 'Comma') {
+                targetRotationX -= turnStep;
+                currentRotationX = targetRotationX; // Make it immediate/not smooth
+            }
+        };
+        window.onkeyup = (e) => keys[e.code] = false;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            if (mixer) mixer.update(delta);
+
+            currentRotationX = targetRotationX; 
+            currentRotationY = THREE.MathUtils.lerp(currentRotationY, targetRotationY, 0.15);
+
+            let moveX = 0, moveZ = 0;
+            const speed = 0.20; 
+
+            if (keys['KeyW']) { moveX += Math.sin(currentRotationX) * speed; moveZ += Math.cos(currentRotationX) * speed; }
+            if (keys['KeyS']) { moveX -= Math.sin(currentRotationX) * speed; moveZ -= Math.cos(currentRotationX) * speed; }
+            if (keys['KeyA']) { moveX += Math.sin(currentRotationX + Math.PI/2) * speed; moveZ += Math.cos(currentRotationX + Math.PI/2) * speed; }
+            if (keys['KeyD']) { moveX -= Math.sin(currentRotationX + Math.PI/2) * speed; moveZ -= Math.cos(currentRotationX + Math.PI/2) * speed; }
+
+            if (moveX !== 0 || moveZ !== 0) player.rotation.y = Math.atan2(moveX, moveZ);
+
+            player.position.x += moveX;
+            player.position.z += moveZ;
+            vy -= 0.02; 
+            player.position.y += vy;
+
+// Now You Can CHANGE An Object! Copy "for (let lava of staticLava)" Chunk And Rename "staticLava" To Your "const", Right Now It Copys The Last CheckPoint Which Kills The Player. You Can Change This To What Ever You Want, Like Taking The Player To The Start And What Ever Is Also Possible!
+
+            for (let lava of staticLava) {
+                if (player.position.x > lava.xMin - 0.2 && player.position.x < lava.xMax + 0.2 &&
+                    player.position.z > lava.zMin - 0.2 && player.position.z < lava.zMax + 0.2 &&
+                    player.position.y > lava.yMin && player.position.y < lava.yMax) {
+                    player.position.copy(lastCheckpoint);
+                    vy = 0;
+                }
+            }
+
+            isGrounded = false;
+            for (let p of platforms) {
+                if (player.position.x > p.xMin && player.position.x < p.xMax &&
+                    player.position.z > p.zMin && player.position.z < p.zMax) {
+                    if (player.position.y <= p.yTop && player.position.y > p.yTop - 1.5) {
+                        player.position.y = p.yTop;
+                        vy = 0;
+                        isGrounded = true;
+                        lastCheckpoint.set(player.position.x, player.position.y + 1, player.position.z);
+                        break;
+                    }
+                }
+            }
+
+            if (!isGrounded) {
+                if (vy > 0) transitionTo(jumpAction);
+                else transitionTo(fallAction);
+            } else if (moveX !== 0 || moveZ !== 0) transitionTo(walkAction);
+            else transitionTo(idleAction);
+
+            if (keys['Space'] && isGrounded) { vy = 0.5; isGrounded = false; }
+            if (player.position.y < -30) { player.position.copy(lastCheckpoint); vy = 0; }
+
+            const camDist = 8;
+            camera.position.x = player.position.x - Math.sin(currentRotationX) * Math.cos(currentRotationY) * camDist;
+            camera.position.z = player.position.z - Math.cos(currentRotationX) * Math.cos(currentRotationY) * camDist;
+            camera.position.y = player.position.y + Math.sin(currentRotationY) * camDist + 4; 
+            camera.lookAt(player.position.x, player.position.y + 2, player.position.z);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

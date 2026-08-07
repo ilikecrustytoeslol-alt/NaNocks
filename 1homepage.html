@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NaNocks</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Honk:400,600,700');
+        :root {
+            --roblox-blue: #27C5F5;
+            --roblox-dark-blue: #07368C;
+            --roblox-orange: #FFA600;
+            --roblox-gray: #f2f2f2;
+            --roblox-light-gray: #e6e6e6;
+            --roblox-border: #b5b5b5;
+        }
+
+        body {
+            font-family: 'Honk', honk;
+            background-color: var(--roblox-blue);
+            background-image: url('https://frutigeraeroarchive.org/images/wallpapers/windows_7/windows_7_187.jpg');
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+            margin: 0;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+
+        .navbar {
+            background-color: light grey;
+            border-bottom: 1px solid var(--roblox-border);
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .navbar .logo {
+            padding: 10px;
+        }
+
+        .navbar .logo img {
+            height: 40px;
+        }
+
+        .navbar .search-bar {
+            display: flex;
+            flex-grow: 1;
+            margin: 0 20px;
+            position: relative;
+        }
+
+        .navbar .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--roblox-border);
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">💬</text></svg>'), auto !important;
+        }
+        
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: grey;
+            border: 1px solid var(--roblox-border);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .search-dropdown.active {
+            max-height: 500px;
+            overflow-y: auto;
+            opacity: 1;
+            visibility: invisible;
+        }
+
+        .search-dropdown .search-result-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--roblox-border);
+            text-decoration: none;
+            color: black;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-dropdown .search-result-item:hover {
+            background-color: var(--roblox-light-gray);
+        }
+
+        .search-dropdown .search-result-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .search-dropdown .nothing-found {
+            padding: 10px;
+            text-align: center;
+            color: gray;
+        }
+
+        .navbar .user-menu {
+            display: flex;
+            align-items: center;
+        }
+
+        .notification-icon-container {
+            position: relative;
+            cursor: pointer;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+
+        .navbar .user-menu .notification-icon {
+            background-color: var(--roblox-blue);
+            color: white;
+            padding: 12px;
+        }
+
+        .notification-icon img {
+            height: 30px;
+            width: auto;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+        
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 250px;
+            background-color: grey;
+            border: 2px solid var(--roblox-border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .notification-dropdown.active {
+            max-height: 200px;
+            overflow-y: auto;
+            opacity: 0.60;
+            visibility: visible;
+        }
+
+        .notification-dropdown .nothing-found {
+            color: gray;
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        
+
+        .navbar .user-menu .robux-balance {
+            background-color: white;
+            padding: 10px;
+            border: 1px solid var(--roblox-border);
+        }
+
+        .main-content {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .games-section {
+            background-color: #0055cc;
+            border: 1px solid var(--roblox-border);
+            padding: 20px;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+
+        .games-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+
+        .game-card {
+            border: 1px solid var(--roblox-border);
+            text-align: center;
+            background-color: var(--roblox-light-gray);
+            cursor: pointer;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+
+        .game-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .game-card-info {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .game-card-info .title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        a {
+              cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">⇖</text></svg>'), auto !important;
+        }
+
+        .game-card-info .players {
+            font-size: 12px;
+            color: gray;
+        }
+
+        /* Fullscreen Modal */
+        .modal {
+            position: fixed;
+            z-index: 99;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: white;
+            color: #333;
+            padding: 40px;
+            text-align: center;
+            font-size: 24px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="logo">
+            <img src="images/boblox-classic (1).png" alt="NaNocks">
+        </div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search">
+            <div id="searchResults" class="search-dropdown">
+                <div id="noResults" class="nothing-found">Nothing found</div>
+            </div>
+        </div>
+        <div class="user-menu">
+            <div class="notification-icon-container">
+                <div class="notification-icon">
+                    <img src="images/costume3 (1).png" alt="Notifications">
+                </div>
+                <div id="notificationDropdown" class="notification-dropdown">
+                    <div class="nothing-found"> 
+                        Hello, new NaNocksian!!
+
+Welcome to NaNocks! We are constantly working to make NaNocks a fun, cool, and a little sandbox for everyone. If you have questions about something, you can ask other people or contact us. At last, the GAMES are a great place to have LOTS of fun with friends and let out boredom.
+
+Have a great time here!
+
+
+                        </div>
+                </div>
+            </div>
+            <div class="currency">
+                <span class="robux-balance"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="games-section">
+            <div class="games-header">
+                <h2>Featured Games</h2>
+                <a href="https://upload.wikimedia.org/wikipedia/commons/6/64/Poster_not_available.jpg">Search ></a>
+                <a href="info.html">Upload Games ></a>
+            </div>
+            <div id="gamesGrid" class="games-grid"></div>
+                <video src="images/videogreating.mp4" style="floa: left; margin: 10px; width: 500px;" autoplay loop muted playsinline></video>
+                <a href="obby.html" class="game-card" data-title="Cool,Cool Obbys!">
+                <div class="game-card" data-title="Cool,Cool Obbys!">
+                    <img src="https://ia903103.us.archive.org/6/items/image-4_202608/image%20%284%29.png" alt="Cool,Cool Obbys!">
+                    <div class="game-card-info">
+                        <div class="title">Cool,Cool Obbys!</div>
+                        <div class="players">Credits to alb886 on itch.io</div>
+                    </div>
+                
+                <div class="game-card" data-title="free">
+                    <a href="NaNocksRoom.html" class="game-card" data-title="NaNocks Room">
+                    <img src="images/free.png" alt="Another Great Game Thumbnail">
+                    <div class="game-card-info">
+                        <div class="title">NaNocks Room</div>
+                        <div class="players">0 Players</div>
+                    </div>
+                
+                <div class="game-card" data-title="free">
+                    <a href="falltoyourdeath.html" class="game-card" data-title="Cool, Cool Obbys">
+                    <img src="images/free.png" alt="Another Great Game Thumbnail">
+                    <div class="game-card-info">
+                        <div class="title">fall to your DEATH</div>
+                        <div class="players">0 Players</div>
+                    </div>
+                
+                <div class="game-card" data-title="free">
+                    <a href="car.html" class="game-card" data-title="cars rumble!!!">
+                    <img src="images/free.png" alt="Epic Adventure Thumbnail">
+                    <div class="game-card-info">
+                        <div class="title">cars rumble!!!</div>
+                        <div class="players">0 Players</div>
+                    </div>
+                </div>
+                
+                <div class="game-card" data-title="free">
+                    <a href="racing.html" class="game-card" data-title="cars rumble!!!">
+                    <img src="images/free.png" alt="Racing Game Thumbnail">
+                    <div class="game-card-info">
+                        <div class="title">Racing Game</div>
+                        <div class="players">0 Players</div>
+                    </div>
+                </div>
+                <div class="game-card" data-title="free">
+                    <a href="SandBoxFun/index.html" class="game-card" data-title="cars rumble!!!">
+                    <img src="images/free.png" alt="Sandbox Fun Thumbnail">
+                    <div class="game-card-info">
+                        <div class="title">Sandbox Fun</div>
+                        <div class="players">0 Players</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Modal -->
+    <div id="gameModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <p>You found an easter egg!</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const notificationIconContainer = document.querySelector('.notification-icon-container');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const noResults = document.getElementById('noResults');
+            const gamesGrid = document.getElementById('gamesGrid');
+            const gameCards = document.querySelectorAll('.games-grid .game-card');
+            const gameModal = document.getElementById('gameModal');
+            const modalClose = document.querySelector('.modal-close');
+            const allGameData = Array.from(gameCards).map(card => ({
+                title: card.dataset.title,
+                html: card.innerHTML
+            }));
+            const searchBar = document.querySelector('.search-bar'); // Get the search-bar container
+
+            // Close dropdowns on outside click
+            document.addEventListener('click', (event) => {
+                if (!notificationIconContainer.contains(event.target)) {
+                    notificationDropdown.classList.remove('active');
+                }
+                if (!searchBar.contains(event.target)) { // Use the search-bar container
+                    searchResults.classList.remove('active');
+                }
+            });
+
+            // Notification toggle
+            notificationIconContainer.addEventListener('click', (event) => {
+                event.stopPropagation();
+                searchResults.classList.remove('active');
+                notificationDropdown.classList.toggle('active');
+            });
+
+            // Debounce for search input to improve performance
+            const debounce = (func, delay) => {
+                let timeout;
+                return function(...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            };
+
+            const handleSearch = () => {
+                const query = searchInput.value.toLowerCase().trim();
+                
+                if (query.length === 0) {
+                    searchResults.classList.remove('active');
+                    return;
+                }
+                
+                notificationDropdown.classList.remove('active');
+
+                const filteredResults = allGameData.filter(game => game.title.toLowerCase().includes(query));
+                searchResults.innerHTML = '';
+                
+                if (filteredResults.length > 0) {
+                    filteredResults.forEach(game => {
+                        const resultItem = document.createElement('a');
+                        resultItem.classList.add('search-result-item');
+                        resultItem.href = '#';
+                        resultItem.innerHTML = game.html;
+                        searchResults.appendChild(resultItem);
+                    });
+                    noResults.style.display = 'none';
+                } else {
+                    noResults.style.display = 'block';
+                    searchResults.appendChild(noResults);
+                }
+                
+                searchResults.classList.add('active');
+            };
+
+            searchInput.addEventListener('input', debounce(handleSearch, 300));
+            
+            // Function to open the modal
+            const openGameModal = () => {
+                gameModal.classList.add('active');
+            };
+
+            // Modal functionality for game grid
+            gamesGrid.addEventListener('click', (event) => {
+                const gameCard = event.target.closest('.game-card');
+                if (gameCard) {
+                    openGameModal();
+                }
+            });
+            
+            // Modal functionality for search results (using event delegation)
+            searchResults.addEventListener('click', (event) => {
+                const searchResultItem = event.target.closest('.search-result-item');
+                if (searchResultItem) {
+                    event.preventDefault(); // Prevent the default link behavior
+                    searchResults.classList.remove('active'); // Close the search dropdown
+                    openGameModal();
+                }
+            });
+
+
+            modalClose.addEventListener('click', () => {
+                gameModal.classList.remove('active');
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target === gameModal) {
+                    gameModal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

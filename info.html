@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NaNocks - Search Results</title>
+    <!-- Include the same styles for consistency -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Add manager-specific styles if needed */
+        .manager-page-content {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+        
+        body {
+            background-color: var(--roblox-blue);
+            background-image: url('https://uploads.scratch.mit.edu/get_image/project/1367043086_206x164.png');
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+            margin: 0;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+        
+        a {
+              cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+        
+        input {
+              cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">💬</text></svg>'), auto !important;
+        }
+
+        .search-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+
+        .no-results {
+            text-align: center;
+            color: gray;
+            font-size: 1.2em;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20">☚</text></svg>'), auto !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Include the same navbar from homepage.html for a consistent user experience -->
+    <div class="navbar">
+        <div class="logo">
+            <img src="images/boblox-classic (1).png" alt="My Custom Logo">
+        </div>
+        
+        <div class="user-menu">
+            <div class="notification-icon-container">
+                <div class="notification-icon">
+                    <img src="images/arrow.png" alt="publish arrow">
+                </div>
+                <div id="notificationDropdown" class="notification-dropdown">
+                    <div class="nothing-found">In order to publish games, you must:
+                    
+                    Not change ANYTHING EXCEPT; The map, the objects or add objects and object's functions. To make games, you have to get the template from the project. You can not have more then 1 game. In NaNocks, theres slots. When a slot is free, your game can be there. All games MUST be child friendly, games are tested by real people and if your game is the same as another or does not follow these rules, its not gonna get added. To Give Us The Game, You must Have A Internet Archive Account (https://archive.org/signup), You Have To Upload a folder With Your Edited html And Your Thumb Nail (Any Size And Type). Send Us Your Upload Page Into the project comments </div>
+                </div>
+            </div>
+            <div class="currency">
+                <span class="robux-balance">
+            </div>
+        </div>
+    </div>
+
+    <!-- Manager page content -->
+    <main class="manager-page-content">
+        <div class="search-results-header">
+            <h2 id="resultsTitle"></h2>
+            <a href="https://scratch.mit.edu/projects/1367091133/">the project</a>
+            
+        </div>
+        <div id="searchResultsGrid" class="games-grid">
+            <!-- Search results will be populated here by JavaScript -->
+        </div>
+    </main>
+
+</body>
+</html>
