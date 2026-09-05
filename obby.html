@@ -105,8 +105,11 @@
     <img id="img-front" src="https://www.image2url.com/r2/default/files/1788547217840-8180e142-db1c-47dc-8d58-7a35d51614ee.png" alt="front">
     <img id="img-right" src="https://www.image2url.com/r2/default/files/1788547549853-729997a8-a11d-411b-a4bb-37ee12cc8c60.png" alt="right">
     <img id="img-jump" src="https://www.image2url.com/r2/default/files/1788545962230-0ff3ac8a-5e1a-4a5b-bf42-500440e33f1d.png" alt="jump">
+    <img id="img-jump-front" src="https://www.image2url.com/r2/default/images/1788630480291-100ae62a-30bc-4efd-a90a-67cbd6d616b4.png" alt="jump front">
     <img id="img-walk1" src="https://www.image2url.com/r2/default/files/1788548519310-78426da9-0896-4283-912f-3177b7dd0c02.png" alt="walk1">
     <img id="img-walk2" src="https://www.image2url.com/r2/default/files/1788548447922-c13f3bdf-7a15-4a1e-91c4-546852ba5f3f.png" alt="walk2">
+    <img id="img-walkback1" src="https://www.image2url.com/r2/default/images/1788629643848-159332e7-d036-4a90-ac05-ef03cda391c8.png" alt="walkback1">
+    <img id="img-walkback2" src="https://www.image2url.com/r2/default/images/1788629773442-28324f42-981e-4738-a4b1-d81ada06e921.png" alt="walkback2">
   </div>
 
   <script>
@@ -115,8 +118,11 @@
     const frontUrl = 'https://www.image2url.com/r2/default/files/1788547217840-8180e142-db1c-47dc-8d58-7a35d51614ee.png';
     const rightUrl = 'https://www.image2url.com/r2/default/files/1788547549853-729997a8-a11d-411b-a4bb-37ee12cc8c60.png';
     const jumpUrl  = 'https://www.image2url.com/r2/default/files/1788545962230-0ff3ac8a-5e1a-4a5b-bf42-500440e33f1d.png';
+    const jumpFrontUrl = 'https://www.image2url.com/r2/default/images/1788630480291-100ae62a-30bc-4efd-a90a-67cbd6d616b4.png';
     const walk1Url = 'https://www.image2url.com/r2/default/files/1788548519310-78426da9-0896-4283-912f-3177b7dd0c02.png';
     const walk2Url = 'https://www.image2url.com/r2/default/files/1788548447922-c13f3bdf-7a15-4a1e-91c4-546852ba5f3f.png';
+    const walkBack1Url = 'https://www.image2url.com/r2/default/images/1788629643848-159332e7-d036-4a90-ac05-ef03cda391c8.png';
+    const walkBack2Url = 'https://www.image2url.com/r2/default/images/1788629773442-28324f42-981e-4738-a4b1-d81ada06e921.png';
 
     const playerImgOverlay = document.getElementById('player-dom-img');
     const fpViewmodel = document.getElementById('fp-viewmodel');
@@ -375,10 +381,18 @@
       let sideScaleMultiplier = 1.0;
 
       if (!isGrounded) {
-        currentSprite = jumpUrl;
+        if (angle >= Math.PI / 4 && angle < 7 * Math.PI / 4) {
+          currentSprite = jumpFrontUrl;
+        } else {
+          currentSprite = jumpUrl;
+        }
       } else if (isMoving) {
         const step = Math.floor(Date.now() / 150) % 2;
-        currentSprite = step === 0 ? walk1Url : walk2Url;
+        if (keys['s'] || keys['arrowdown']) {
+          currentSprite = step === 0 ? walkBack1Url : walkBack2Url;
+        } else {
+          currentSprite = step === 0 ? walk1Url : walk2Url;
+        }
       } else {
         if (angle >= Math.PI / 4 && angle < 3 * Math.PI / 4) {
           currentSprite = leftUrl;
