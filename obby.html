@@ -1,561 +1,478 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <style>
-        body { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><text y="20" font-size="20"></text></svg>'), auto !important;margin: 0; overflow: hidden; background: #000; }
-        #ui { position: absolute; top: 10px; width: 100%; pointer-events: none; }
-        
-    </style>
+  <meta charset="UTF-8">
+  <title>game</title>
+  <style>
+      
+      :root { color-scheme: light !important; }
+      * { border-radius: 0 !important; box-shadow: none !important; text-shadow: none !important; }
+      
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      background-image: url('https://anytourl.com/api/file/download?id=86309423927110900&inline=1');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .player-dom-img {
+      position: absolute;
+      pointer-events: none;
+      z-index: 5;
+      transform: translate(-50%, -50%);
+      image-rendering: pixelated;
+    }
+    #fp-viewmodel {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      pointer-events: none;
+      z-index: 5;
+      display: none;
+      max-height: 45vh;
+      max-width: 45vw;
+      image-rendering: pixelated;
+    }
+    .preload-imgs {
+      display: none;
+    }
+    #room-ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    #room-ui input {
+      background: rgba(0, 0, 0, 0);
+      border: 1px solid #555;
+      color: #00ff66;
+      padding: 4px;
+      width: 80px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    #room-ui button {
+      background: #fffff;
+      border: none;
+      color: rgba(0, 0, 0, 0);
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 </head>
 <body>
-    <div id="ui"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
-    <div class="ct-ui-widget">
-  <style>
-    .ct-ui-widget, .ct-ui-widget * {
-      all: unset;
-      box-sizing: border-box;
-    }
-    .ct-ui-widget style { display: none !important; }
-    .ct-ui-widget {
-      --ct-card-brown:   #c8935f;
-      --ct-card-dark:    #7a5230;
-      --ct-stitch-cream: #f2e6d0;
-      --ct-felt-red:     #d8543a;
-      display: block;
-      font-family: 'Trebuchet MS', 'Segoe UI', sans-serif !important;
-      font-variant-numeric: tabular-nums;
-    }
-    .ct-panel {
-      display: block;
-      position: absolute;
-      background: linear-gradient(180deg, var(--ct-card-brown), var(--ct-card-dark));
-      border: 3px dashed var(--ct-stitch-cream);
-      border-radius: 14px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 0 0 6px rgba(43,28,16,0.25);
-      color: var(--ct-stitch-cream);
-      font-family: inherit;
-      line-height: 1.4;
-    }
-    .ct-ui-root {
-      display: block;
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 10;
-    }
-    .ct-watermark {
-      top: 18px;
-      left: 18px;
-      padding: 8px 18px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      letter-spacing: 0.06em;
-      text-shadow: 0 2px 0 rgba(0,0,0,0.35);
-      transform: rotate(-2deg);
-    }
-    .ct-watermark-sub {
-      display: block;
-      font-size: 0.6rem;
-      font-weight: 400;
-      letter-spacing: 0.2em;
-      opacity: 0.85;
-      margin-top: 2px;
-    }
-    .ct-score {
-      top: 18px;
-      right: 18px;
-      padding: 8px 20px;
-      font-weight: 700;
-      font-size: 1.35rem;
-      transform: rotate(2deg);
-      min-width: 92px;
-      text-align: center;
-    }
-    .ct-score-label {
-      display: block;
-      font-size: 0.55rem;
-      letter-spacing: 0.25em;
-      font-weight: 400;
-      opacity: 0.85;
-    }
-    .ct-score-value { display: block; font-size: 1.35rem; }
-    .ct-layers {
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 6px 16px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      font-size: 0.65rem;
-      letter-spacing: 0.15em;
-    }
-    .ct-layer-dot {
-      display: block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(242,230,208,0.25);
-      border: 2px solid var(--ct-stitch-cream);
-      transition: background 0.25s ease, transform 0.25s ease;
-    }
-    .ct-layer-dot.active {
-      background: var(--ct-felt-red);
-      transform: scale(1.25);
-    }
-    .ct-controls {
-      bottom: 18px;
-      right: 18px;
-      padding: 8px 14px;
-      font-size: 0.62rem;
-      line-height: 1.6;
-      letter-spacing: 0.03em;
-      max-width: 230px;
-      opacity: 0.9;
-    }
-    .ct-controls b { font-weight: 700; color: var(--ct-felt-red); }
-  </style>
-  <div class="ct-ui-root">
-    <div class="ct-panel ct-watermark">Craft Theatre<span class="ct-watermark-sub">a cardboard platformer</span></div>
-    <div class="ct-panel ct-score">
-      <span class="ct-score-label">BUBBLES</span>
-      <span class="ct-score-value" data-score>0</span>
-    </div>
-    <div class="ct-panel ct-layers">
-      <span>BACK</span>
-      <div class="ct-layer-dot" data-layer="2"></div>
-      <div class="ct-layer-dot active" data-layer="1"></div>
-      <div class="ct-layer-dot" data-layer="0"></div>
-      <span>FRONT</span>
-    </div>
-    <div class="ct-panel ct-controls">
-      <b>A/D</b> move &nbsp; <b>Space</b> jump<br/>
-      <b>W/S</b> shift layer &nbsp; <b>Shift</b> grab
-    </div>
+  <div id="canvas-container"></div>
+  <div id="room-ui">
+     <span id="my-code" style="color:#00ff66; font-weight:bold;">0000</span>  
+     <input id="code-input" type="number" placeholder="0000"><button id="join-btn">.</button>
   </div>
-</div>
-    <script>
-        const scene = new THREE.Scene();
-        const texLoader = new THREE.TextureLoader();
-        scene.background = texLoader.load('https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRPLfH-t2Xb2KdNdaeZuLsb2a520Q5ma49Oz7Ek2SleE3e_4k4l');
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+  <img id="player-dom-img" class="player-dom-img" src="https://www.image2url.com/r2/default/files/1788546023187-9bf757bf-488e-4348-afa2-1fb5270e280c.png" alt="player">
+  <img id="fp-viewmodel" src="https://shy-grass-406.linkyhost.com/?raw=true" alt="fp overlay">
 
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-        scene.add(hemiLight);
+  <div class="preload-imgs">
+    <img id="img-back" src="https://www.image2url.com/r2/default/files/1788546023187-9bf757bf-488e-4348-afa2-1fb5270e280c.png" alt="back">
+    <img id="img-left" src="https://www.image2url.com/r2/default/files/1788547401571-85158778-58e9-4374-b100-c3762d1eb776.png" alt="left">
+    <img id="img-front" src="https://www.image2url.com/r2/default/files/1788547217840-8180e142-db1c-47dc-8d58-7a35d51614ee.png" alt="front">
+    <img id="img-right" src="https://www.image2url.com/r2/default/files/1788547549853-729997a8-a11d-411b-a4bb-37ee12cc8c60.png" alt="right">
+    <img id="img-jump" src="https://www.image2url.com/r2/default/files/1788545962230-0ff3ac8a-5e1a-4a5b-bf42-500440e33f1d.png" alt="jump">
+    <img id="img-walk1" src="https://www.image2url.com/r2/default/files/1788548519310-78426da9-0896-4283-912f-3177b7dd0c02.png" alt="walk1">
+    <img id="img-walk2" src="https://www.image2url.com/r2/default/files/1788548447922-c13f3bdf-7a15-4a1e-91c4-546852ba5f3f.png" alt="walk2">
+  </div>
 
-        function createTextSprite(message) {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = 256;
-            canvas.height = 128;
-            context.font = "Bold 24px Arial";
-            context.textAlign = "center";
-            
-            context.strokeStyle = "black";
-            context.lineWidth = 4;
-            context.strokeText(message, 128, 64);
-            
-            context.fillStyle = "white";
-            context.fillText(message, 128, 64);
-            
-            const texture = new THREE.CanvasTexture(canvas);
-            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
-            const sprite = new THREE.Sprite(spriteMaterial);
-            sprite.scale.set(3, 1.5, 1);
-            return sprite;
+  <script>
+    const backUrl  = 'https://www.image2url.com/r2/default/files/1788546023187-9bf757bf-488e-4348-afa2-1fb5270e280c.png';
+    const leftUrl  = 'https://www.image2url.com/r2/default/files/1788547401571-85158778-58e9-4374-b100-c3762d1eb776.png';
+    const frontUrl = 'https://www.image2url.com/r2/default/files/1788547217840-8180e142-db1c-47dc-8d58-7a35d51614ee.png';
+    const rightUrl = 'https://www.image2url.com/r2/default/files/1788547549853-729997a8-a11d-411b-a4bb-37ee12cc8c60.png';
+    const jumpUrl  = 'https://www.image2url.com/r2/default/files/1788545962230-0ff3ac8a-5e1a-4a5b-bf42-500440e33f1d.png';
+    const walk1Url = 'https://www.image2url.com/r2/default/files/1788548519310-78426da9-0896-4283-912f-3177b7dd0c02.png';
+    const walk2Url = 'https://www.image2url.com/r2/default/files/1788548447922-c13f3bdf-7a15-4a1e-91c4-546852ba5f3f.png';
+
+    const playerImgOverlay = document.getElementById('player-dom-img');
+    const fpViewmodel = document.getElementById('fp-viewmodel');
+    const myCodeSpan = document.getElementById('my-code');
+    const codeInput = document.getElementById('code-input');
+    const joinBtn = document.getElementById('join-btn');
+    const playerBaseSize = 75;
+
+    const numericPin = Math.floor(1000 + Math.random() * 9000).toString();
+    const peer = new Peer('blocky_' + numericPin);
+    const connections = {};
+    const remotePlayers = {};
+
+    peer.on('open', () => {
+      myCodeSpan.innerText = numericPin;
+    });
+
+    peer.on('connection', (conn) => {
+      setupConnection(conn);
+    });
+
+    joinBtn.addEventListener('click', () => {
+      const pinVal = codeInput.value.trim();
+      if (pinVal.length === 4) {
+        const targetFullId = 'blocky_' + pinVal;
+        if (targetFullId !== peer.id) {
+          const conn = peer.connect(targetFullId);
+          setupConnection(conn);
         }
-
-        const player = new THREE.Group();
-        player.position.set(0, 5, 0);
-        scene.add(player);
-
-        let myVisitorNum = Math.floor(Math.random() * 9999);
-        const myNameTag = createTextSprite("Visitor_" + myVisitorNum);
-        myNameTag.position.y = 2; 
-        player.add(myNameTag);
-
-        let lastCheckpoint = new THREE.Vector3(0, 5, 0);
-        let mixer, idleAction, walkAction, jumpAction, fallAction, currentAction;
-        const clock = new THREE.Clock();
-
-        let targetRotationX = 0, currentRotationX = 0;
-        let targetRotationY = 0.3, currentRotationY = 0.3;
-        let isRightMouseDown = false;
-
-        window.addEventListener('contextmenu', (e) => e.preventDefault());
-        window.addEventListener('mousedown', (e) => { if (e.button === 2) isRightMouseDown = true; });
-        window.addEventListener('mouseup', (e) => { if (e.button === 2) isRightMouseDown = false; });
-        window.addEventListener('mousemove', (e) => {
-            if (isRightMouseDown) {
-                targetRotationX -= e.movementX * 0.005;
-                targetRotationY -= e.movementY * 0.005; 
-                targetRotationY = Math.max(-0.8, Math.min(1.2, targetRotationY));
-            }
-        });
-
-        const platforms = [];
-        const staticLava = [];
-
-        function createBlock(x, y, z, w, d, h=1, color=0xffffff) {
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshPhongMaterial({ color: color }));
-            mesh.position.set(x, y, z);
-            scene.add(mesh);
-            platforms.push({ xMin: x-w/2, xMax: x+w/2, zMin: z-d/2, zMax: z+d/2, yTop: y+h/2 });
-        }
-
-        function createStaticLava(x, y, z, w, d, h=0.8) {
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
-            mesh.position.set(x, y, z);
-            scene.add(mesh);
-            staticLava.push({ xMin: x-w/2, xMax: x+w/2, zMin: z-d/2, zMax: z+d/2, yMin: y-h/2, yMax: y+h/2 + 1 });
-        }
-
-        createBlock(0, -2, 0, 10, 10, 1, 0x444444); 
-        for(let i=1; i<=3; i++) createBlock(0, -2 + (i*1.5), -i*10, 6, 6, 0.5, 0xffffff);
-        
-        createBlock(0, 4, -45, 12, 12, 0.5, 0x55FF55);
-        createStaticLava(0, 4.4, -45, 12, 1.5); 
-        
-        createBlock(0, 4, -65, 12, 12, 0.5, 0x55FF55);
-        createStaticLava(0, 4.4, -65, 12, 1.5); 
-
-        createBlock(0, 8, -85, 15, 15, 1, 0xFFD700);
-
-        const gltfLoader = new THREE.GLTFLoader();
-        gltfLoader.load('https://raw.githubusercontent.com/beesw134-gif/noob2/main/r6_roblox_noob_animated%20(1).glb', (gltf) => {
-            player.add(gltf.scene);
-            mixer = new THREE.AnimationMixer(gltf.scene);
-            gltf.animations.forEach((clip) => {
-                const n = clip.name;
-                if (n === 'R6Armature|Idle') idleAction = mixer.clipAction(clip);
-                else if (n.includes('Run') || n.includes('Walk')) { 
-                    walkAction = mixer.clipAction(clip); 
-                    walkAction.timeScale = 2.2; 
-                }
-                else if (n.includes('Jump')) jumpAction = mixer.clipAction(clip);
-                else if (n.includes('Fall')) fallAction = mixer.clipAction(clip);
-            });
-            currentAction = idleAction;
-            if (currentAction) currentAction.play();
-        });
-
-        function transitionTo(nextAction) {
-            if (nextAction && nextAction !== currentAction) {
-                if (currentAction) currentAction.fadeOut(0.1);
-                currentAction = nextAction;
-                currentAction.reset().fadeIn(0.1).play();
-            }
-        }
-
-        let vy = 0, isGrounded = false;
-        const keys = {};
-        
-        const turnStep = Math.PI / 8; 
-
-        window.onkeydown = (e) => {
-            if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-            keys[e.code] = true;
-            if (e.code === 'Period') {
-                targetRotationX += turnStep;
-                currentRotationX = targetRotationX;
-            }
-            if (e.code === 'Comma') {
-                targetRotationX -= turnStep;
-                currentRotationX = targetRotationX; 
-            }
-        };
-        window.onkeyup = (e) => {
-            if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-            keys[e.code] = false;
-        };
-
-        const GLOBAL_ROOM = 'silly_obby_global_room_v1_2026';
-        let myId = Math.random().toString(36).substring(2, 15);
-        const remotePlayers = {};
-        
-        let isHost = false;
-        let hostConns = [];
-        let myPeer = null;
-        let hostConn = null;
-
-        function handleIncomingData(data) {
-            if (!remotePlayers[data.id]) {
-                createRemotePlayer(data.id, data.num);
-            }
-            const rp = remotePlayers[data.id];
-            rp.lastSeen = Date.now();
-            rp.group.position.set(data.x, data.y, data.z);
-            rp.group.rotation.y = data.rot;
-            
-            if (rp.currentActionName !== data.action && rp.actions[data.action]) {
-                if (rp.currentAction) rp.currentAction.fadeOut(0.1);
-                rp.currentActionName = data.action;
-                rp.currentAction = rp.actions[data.action];
-                rp.currentAction.reset().fadeIn(0.1).play();
-            }
-        }
-
-        function tryHost() {
-            myPeer = new Peer(GLOBAL_ROOM);
-            
-            myPeer.on('open', (id) => {
-                isHost = true;
-                
-                myPeer.on('connection', (conn) => {
-                    hostConns.push(conn);
-                    conn.on('data', (data) => {
-                        hostConns.forEach(c => {
-                            if (c !== conn && c.open) c.send(data);
-                        });
-                        handleIncomingData(data);
-                    });
-                    conn.on('close', () => {
-                        hostConns = hostConns.filter(c => c !== conn);
-                    });
-                });
-            });
-
-            myPeer.on('error', (err) => {
-                if (err.type === 'unavailable-id') {
-                    myPeer.destroy();
-                    joinAsClient();
-                }
-            });
-        }
-
-        function joinAsClient() {
-            myPeer = new Peer(myId);
-            myPeer.on('open', (id) => {
-                hostConn = myPeer.connect(GLOBAL_ROOM);
-                
-                hostConn.on('data', (data) => {
-                    handleIncomingData(data);
-                });
-            });
-        }
-
-        tryHost();
-
-        setInterval(() => {
-            const now = Date.now();
-            for (let id in remotePlayers) {
-                if (now - remotePlayers[id].lastSeen > 3000) {
-                    scene.remove(remotePlayers[id].group);
-                    delete remotePlayers[id];
-                }
-            }
-        }, 2000);
-
-        function createRemotePlayer(id, num) {
-            const group = new THREE.Group();
-            group.position.set(0, 5, 0);
-            scene.add(group);
-            
-            const vNum = num || Math.floor(Math.random() * 9999);
-            const nameTag = createTextSprite("Visitor_" + vNum);
-            nameTag.position.y = 2;
-            group.add(nameTag);
-            
-            remotePlayers[id] = { group: group, actions: {}, currentActionName: 'idle', mixer: null, currentAction: null, lastSeen: Date.now() };
-            
-            gltfLoader.load('https://raw.githubusercontent.com/beesw134-gif/noob2/main/r6_roblox_noob_animated%20(1).glb', (gltf) => {
-                group.add(gltf.scene);
-                const rm = new THREE.AnimationMixer(gltf.scene);
-                remotePlayers[id].mixer = rm;
-                
-                gltf.animations.forEach((clip) => {
-                    const n = clip.name;
-                    if (n === 'R6Armature|Idle') remotePlayers[id].actions['idle'] = rm.clipAction(clip);
-                    else if (n.includes('Run') || n.includes('Walk')) { 
-                        const wa = rm.clipAction(clip);
-                        wa.timeScale = 2.2;
-                        remotePlayers[id].actions['walk'] = wa; 
-                    }
-                    else if (n.includes('Jump')) remotePlayers[id].actions['jump'] = rm.clipAction(clip);
-                    else if (n.includes('Fall')) remotePlayers[id].actions['fall'] = rm.clipAction(clip);
-                });
-                
-                remotePlayers[id].currentAction = remotePlayers[id].actions['idle'];
-                if (remotePlayers[id].currentAction) remotePlayers[id].currentAction.play();
-            });
-        }
-
-        let frameCount = 0;
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
-            
-            if (mixer) mixer.update(delta);
-            for (let id in remotePlayers) {
-                if (remotePlayers[id].mixer) {
-                    remotePlayers[id].mixer.update(delta);
-                }
-            }
-
-            currentRotationX = targetRotationX; 
-            currentRotationY = THREE.MathUtils.lerp(currentRotationY, targetRotationY, 0.15);
-
-            let moveX = 0, moveZ = 0;
-            const speed = 0.20; 
-
-            if (keys['KeyW']) { moveX += Math.sin(currentRotationX) * speed; moveZ += Math.cos(currentRotationX) * speed; }
-            if (keys['KeyS']) { moveX -= Math.sin(currentRotationX) * speed; moveZ -= Math.cos(currentRotationX) * speed; }
-            if (keys['KeyA']) { moveX += Math.sin(currentRotationX + Math.PI/2) * speed; moveZ += Math.cos(currentRotationX + Math.PI/2) * speed; }
-            if (keys['KeyD']) { moveX -= Math.sin(currentRotationX + Math.PI/2) * speed; moveZ -= Math.cos(currentRotationX + Math.PI/2) * speed; }
-
-            if (moveX !== 0 || moveZ !== 0) player.rotation.y = Math.atan2(moveX, moveZ);
-
-            player.position.x += moveX;
-            player.position.z += moveZ;
-            vy -= 0.02; 
-            player.position.y += vy;
-
-            for (let lava of staticLava) {
-                if (player.position.x > lava.xMin - 0.2 && player.position.x < lava.xMax + 0.2 &&
-                    player.position.z > lava.zMin - 0.2 && player.position.z < lava.zMax + 0.2 &&
-                    player.position.y > lava.yMin && player.position.y < lava.yMax) {
-                    player.position.copy(lastCheckpoint);
-                    vy = 0;
-                }
-            }
-
-            isGrounded = false;
-            for (let p of platforms) {
-                if (player.position.x > p.xMin && player.position.x < p.xMax &&
-                    player.position.z > p.zMin && player.position.z < p.zMax) {
-                    if (player.position.y <= p.yTop && player.position.y > p.yTop - 1.5) {
-                        player.position.y = p.yTop;
-                        vy = 0;
-                        isGrounded = true;
-                        lastCheckpoint.set(player.position.x, player.position.y + 1, player.position.z);
-                        break;
-                    }
-                }
-            }
-
-            if (!isGrounded) {
-                if (vy > 0) transitionTo(jumpAction);
-                else transitionTo(fallAction);
-            } else if (moveX !== 0 || moveZ !== 0) transitionTo(walkAction);
-            else transitionTo(idleAction);
-
-            if (keys['Space'] && isGrounded) { vy = 0.5; isGrounded = false; }
-            if (player.position.y < -30) { player.position.copy(lastCheckpoint); vy = 0; }
-
-            frameCount++;
-            if (frameCount % 4 === 0) {
-                let actStr = 'idle';
-                if (currentAction === walkAction) actStr = 'walk';
-                else if (currentAction === jumpAction) actStr = 'jump';
-                else if (currentAction === fallAction) actStr = 'fall';
-                
-                const myData = {
-                    id: isHost ? GLOBAL_ROOM : myId,
-                    x: player.position.x,
-                    y: player.position.y,
-                    z: player.position.z,
-                    rot: player.rotation.y,
-                    action: actStr,
-                    num: myVisitorNum
-                };
-                
-                if (isHost) {
-                    hostConns.forEach(c => {
-                        if (c.open) c.send(myData);
-                    });
-                } else if (hostConn && hostConn.open) {
-                    hostConn.send(myData);
-                }
-            }
-
-            const camDist = 8;
-            camera.position.x = player.position.x - Math.sin(currentRotationX) * Math.cos(currentRotationY) * camDist;
-            camera.position.z = player.position.z - Math.cos(currentRotationX) * Math.cos(currentRotationY) * camDist;
-            camera.position.y = player.position.y + Math.sin(currentRotationY) * camDist + 4; 
-            camera.lookAt(player.position.x, player.position.y + 2, player.position.z);
-
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-    
-    <script>
-(function() {
-  const DEADZONE = 0.35;
-  const held = new Set();
-
-  function press(key) {
-    if (held.has(key)) return;
-    held.add(key);
-    document.dispatchEvent(new KeyboardEvent('keydown', { key, code: keyCode(key), bubbles: true }));
-  }
-
-  function release(key) {
-    if (!held.has(key)) return;
-    held.delete(key);
-    document.dispatchEvent(new KeyboardEvent('keyup', { key, code: keyCode(key), bubbles: true }));
-  }
-
-  function keyCode(key) {
-    const map = {
-      w: 'KeyW', a: 'KeyA', s: 'KeyS', d: 'KeyD',
-      ',': 'Comma', '.': 'Period', ' ': 'Space'
-    };
-    return map[key] || '';
-  }
-
-  function poll() {
-    const pads = navigator.getGamepads();
-    for (const gp of pads) {
-      if (!gp) continue;
-
-      const [lx, ly, rx, ry] = gp.axes;
-
-      updateAxisPair(lx, 'a', 'd', DEADZONE);
-      updateAxisPair(ly, 'w', 's', DEADZONE);
-      updateAxisPair(rx, ',', '.', DEADZONE);
-
-      if (gp.buttons[0] && gp.buttons[0].pressed) {
-        press(' ');
-      } else {
-        release(' ');
       }
-    }
-    requestAnimationFrame(poll);
-  }
+    });
 
-  function updateAxisPair(value, negKey, posKey, deadzone) {
-    if (value < -deadzone) {
-      press(negKey);
-      release(posKey);
-    } else if (value > deadzone) {
-      press(posKey);
-      release(negKey);
-    } else {
-      release(negKey);
-      release(posKey);
-    }
-  }
+    function setupConnection(conn) {
+      conn.on('open', () => {
+        connections[conn.peer] = conn;
+      });
 
-  window.addEventListener('gamepadconnected', () => {
-    requestAnimationFrame(poll);
-  });
-})();
-</script>
+      conn.on('data', (data) => {
+        if (data.type === 'move') {
+          if (!remotePlayers[conn.peer]) {
+            createRemotePlayer(conn.peer);
+          }
+          const rp = remotePlayers[conn.peer];
+          rp.x = data.x;
+          rp.y = data.y;
+          rp.z = data.z;
+          rp.sprite = data.sprite;
+        }
+      });
+
+      conn.on('close', () => {
+        if (remotePlayers[conn.peer]) {
+          remotePlayers[conn.peer].element.remove();
+          delete remotePlayers[conn.peer];
+        }
+        delete connections[conn.peer];
+      });
+    }
+
+    function createRemotePlayer(id) {
+      const img = document.createElement('img');
+      img.className = 'player-dom-img';
+      img.src = backUrl;
+      document.body.appendChild(img);
+      remotePlayers[id] = { x: 0, y: 1, z: 0, sprite: backUrl, element: img };
+    }
+
+    let camYaw = 0;   
+    let camPitch = 0.3; 
+    let isDragging = false;
+    let prevMouseX = 0;
+    let prevMouseY = 0;
+
+    window.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging || !isThirdPerson) return;
+      const deltaX = e.clientX - prevMouseX;
+      const deltaY = e.clientY - prevMouseY;
+      camYaw -= deltaX * 0.008;
+      camPitch = Math.max(0.05, Math.min(1.2, camPitch + deltaY * 0.008));
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+    });
+
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    sunLight.position.set(40, 60, -80);
+    sunLight.castShadow = true;
+    scene.add(sunLight);
+
+    const sunGeo = new THREE.SphereGeometry(10, 16, 16);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    sunMesh.position.copy(sunLight.position);
+    scene.add(sunMesh);
+
+    const groundGeo = new THREE.PlaneGeometry(300, 300);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x00aa33, flatShading: true });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const colliders = [];
+    const mapLimit = 145;
+
+    function addBlock(x, y, z, w, h, d, color) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const mat = new THREE.MeshLambertMaterial({ color: color, flatShading: true });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y + h / 2, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+
+      colliders.push({
+        minX: x - w / 2, maxX: x + w / 2,
+        minY: y, maxY: y + h,
+        minZ: z - d / 2, maxZ: z + d / 2
+      });
+    }
+
+    addBlock(-8, 0, -10, 4, 0.6, 4, 0xaaaaaa);
+    addBlock(5, 0, 5, 3, 2, 3, 0xff0055);
+    addBlock(-6, 0, 6, 3, 3, 3, 0x0055ff);
+    addBlock(10, 0, -5, 2, 4, 2, 0xffaa00);
+    addBlock(0, 0, 12, 4, 2, 4, 0xaa00ff);
+
+    function checkHorizontalCollision(px, pz, pyHeight) {
+      const radius = 0.45;
+      for (let c of colliders) {
+        if (pyHeight < c.maxY && (pyHeight + 1.8) > c.minY) {
+          const closestX = Math.max(c.minX, Math.min(px, c.maxX));
+          const closestZ = Math.max(c.minZ, Math.min(pz, c.maxZ));
+          const dx = px - closestX;
+          const dz = pz - closestZ;
+          if ((dx * dx + dz * dz) < (radius * radius)) return true;
+        }
+      }
+      return false;
+    }
+
+    function getFloorY(px, pz) {
+      let highestY = 0;
+      const r = 0.35;
+      for (let c of colliders) {
+        if (px + r > c.minX && px - r < c.maxX && pz + r > c.minZ && pz - r < c.maxZ) {
+          if (c.maxY > highestY) highestY = c.maxY;
+        }
+      }
+      return highestY + groundBaseY;
+    }
+
+    const playerGroup = new THREE.Group();
+    const groundBaseY = 1.0;
+    playerGroup.position.set(0, groundBaseY, 0);
+    scene.add(playerGroup);
+
+    let isThirdPerson = true;
+    let velocityY = 0;
+    let isGrounded = true;
+    const gravity = -0.012;
+    const jumpStrength = 0.28;
+    const speed = 0.12;
+    const keys = {};
+    let lastSend = 0;
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.key.toLowerCase()] = true;
+      if (e.key === ' ') e.preventDefault();
+      if (e.key.toLowerCase() === 'v') isThirdPerson = !isThirdPerson;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const dist = 7;
+      const camOffsetX = dist * Math.sin(camYaw) * Math.cos(camPitch);
+      const camOffsetY = dist * Math.sin(camPitch) + 1.5;
+      const camOffsetZ = dist * Math.cos(camYaw) * Math.cos(camPitch);
+
+      const forward = new THREE.Vector3(-camOffsetX, 0, -camOffsetZ).normalize();
+      const right = forward.clone().cross(new THREE.Vector3(0, 1, 0)).normalize();
+
+      const moveVector = new THREE.Vector3(0, 0, 0);
+      if (keys['w'] || keys['arrowup']) moveVector.add(forward);
+      if (keys['s'] || keys['arrowdown']) moveVector.sub(forward);
+      if (keys['d'] || keys['arrowright']) moveVector.add(right);
+      if (keys['a'] || keys['arrowleft']) moveVector.sub(right);
+
+      const isMoving = moveVector.lengthSq() > 0;
+      if (isMoving) {
+        moveVector.normalize();
+        const targetX = Math.max(-mapLimit, Math.min(mapLimit, playerGroup.position.x + moveVector.x * speed));
+        if (!checkHorizontalCollision(targetX, playerGroup.position.z, playerGroup.position.y - groundBaseY)) {
+          playerGroup.position.x = targetX;
+        }
+        const targetZ = Math.max(-mapLimit, Math.min(mapLimit, playerGroup.position.z + moveVector.z * speed));
+        if (!checkHorizontalCollision(playerGroup.position.x, targetZ, playerGroup.position.y - groundBaseY)) {
+          playerGroup.position.z = targetZ;
+        }
+      }
+
+      const currentGroundY = getFloorY(playerGroup.position.x, playerGroup.position.z);
+
+      if (keys[' '] && isGrounded) {
+        velocityY = jumpStrength;
+        isGrounded = false;
+      }
+
+      if (isGrounded) {
+        if (playerGroup.position.y > currentGroundY) {
+          isGrounded = false;
+          velocityY = 0;
+        } else {
+          playerGroup.position.y = currentGroundY;
+        }
+      }
+
+      if (!isGrounded) {
+        playerGroup.position.y += velocityY;
+        velocityY += gravity;
+        if (playerGroup.position.y <= currentGroundY) {
+          playerGroup.position.y = currentGroundY;
+          velocityY = 0;
+          isGrounded = true;
+        }
+      }
+
+      let angle = camYaw % (Math.PI * 2);
+      if (angle < 0) angle += Math.PI * 2;
+
+      let currentSprite = backUrl;
+      let sideScaleMultiplier = 1.0;
+
+      if (!isGrounded) {
+        currentSprite = jumpUrl;
+      } else if (isMoving) {
+        const step = Math.floor(Date.now() / 150) % 2;
+        currentSprite = step === 0 ? walk1Url : walk2Url;
+      } else {
+        if (angle >= Math.PI / 4 && angle < 3 * Math.PI / 4) {
+          currentSprite = leftUrl;
+          sideScaleMultiplier = 0.82;
+        } else if (angle >= 3 * Math.PI / 4 && angle < 5 * Math.PI / 4) {
+          currentSprite = frontUrl;
+        } else if (angle >= 5 * Math.PI / 4 && angle < 7 * Math.PI / 4) {
+          currentSprite = rightUrl;
+          sideScaleMultiplier = 0.82;
+        } else {
+          currentSprite = backUrl;
+        }
+      }
+
+      if (playerImgOverlay.src !== currentSprite) {
+        playerImgOverlay.src = currentSprite;
+      }
+
+      if (Date.now() - lastSend > 50) {
+        for (let peerId in connections) {
+          connections[peerId].send({
+            type: 'move',
+            x: playerGroup.position.x,
+            y: playerGroup.position.y,
+            z: playerGroup.position.z,
+            sprite: currentSprite
+          });
+        }
+        lastSend = Date.now();
+      }
+
+      if (isThirdPerson) {
+        fpViewmodel.style.display = 'none';
+
+        const camPos = playerGroup.position.clone().add(new THREE.Vector3(camOffsetX, camOffsetY, camOffsetZ));
+        camera.position.copy(camPos);
+        camera.lookAt(playerGroup.position.clone().add(new THREE.Vector3(0, 0.5, 0)));
+
+        const screenPos = playerGroup.position.clone();
+        screenPos.y += 0.2;
+        screenPos.project(camera);
+
+        const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (screenPos.y * -0.5 + 0.5) * window.innerHeight;
+
+        const currentDist = camera.position.distanceTo(playerGroup.position);
+        const scale = Math.max(0.4, Math.min(1.8, 10 / currentDist));
+        
+        playerImgOverlay.style.display = 'block';
+        playerImgOverlay.style.left = `${x}px`;
+        playerImgOverlay.style.top = `${y}px`;
+        playerImgOverlay.style.width = `${playerBaseSize * scale * sideScaleMultiplier}px`;
+
+      } else {
+        fpViewmodel.style.display = 'block';
+
+        const headPos = playerGroup.position.clone().add(new THREE.Vector3(0, 0.5, 0));
+        camera.position.copy(headPos);
+        camera.lookAt(headPos.clone().add(forward.clone().multiplyScalar(5)));
+        playerImgOverlay.style.display = 'none';
+      }
+
+      for (let id in remotePlayers) {
+        const rp = remotePlayers[id];
+        if (rp.element.src !== rp.sprite) rp.element.src = rp.sprite;
+
+        const rpos = new THREE.Vector3(rp.x, rp.y + 0.2, rp.z);
+        rpos.project(camera);
+
+        const rx = (rpos.x * 0.5 + 0.5) * window.innerWidth;
+        const ry = (rpos.y * -0.5 + 0.5) * window.innerHeight;
+
+        if (rpos.z < 1) {
+          const rdist = camera.position.distanceTo(new THREE.Vector3(rp.x, rp.y, rp.z));
+          const rscale = Math.max(0.2, Math.min(2.0, 10 / rdist));
+          rp.element.style.display = 'block';
+          rp.element.style.left = `${rx}px`;
+          rp.element.style.top = `${ry}px`;
+          rp.element.style.width = `${playerBaseSize * rscale}px`;
+        } else {
+          rp.element.style.display = 'none';
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+  </script>
 </body>
 </html>
